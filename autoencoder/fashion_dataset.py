@@ -4,7 +4,7 @@ from sklearn.preprocessing import LabelBinarizer
 
 class FashionDataset():
 
-    def __init__(self):
+    def __init__(self, img_dir):
         # https://www.kaggle.com/paramaggarwal/fashion-product-images-small
         self.label = 'articleType'
         self.n_classes = 143
@@ -18,3 +18,13 @@ class FashionDataset():
         
         self.data[self.x_col] = self.data[self.x].apply(lambda v: '{}.jpg'.format(v))
         self.data[self.y_col] = y.tolist()
+
+        drop_idx = []
+        for i in range(self.data.shape[0]):
+
+            if not (img_dir / self.data.iloc[i, 10]).exists():
+                drop_idx.append(i)
+
+        self.data = self.data.drop(drop_idx)
+
+
