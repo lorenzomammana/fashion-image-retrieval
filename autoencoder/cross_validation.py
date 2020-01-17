@@ -10,7 +10,7 @@ from sklearn.model_selection import StratifiedShuffleSplit, StratifiedKFold
 
 if __name__ == '__main__':
     
-    img_shape = (224, 168, 3)
+    img_shape = (224, 224, 3)
     batch_size = 128
     n_workers = 8
     epochs = 50
