@@ -9,7 +9,7 @@ from keras_retinanet.utils.colors import label_color
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
-import time
+import sys
 
 from skimage.measure import regionprops
 
@@ -104,10 +104,10 @@ def draw_mask_only(image, box, mask, label=None, color=None, binarize_threshold=
     return mask
 
 
-if __name__ == '__main__':
+def main(filename):
     model, labels_to_names = loadModel()
 
-    image = read_image_bgr(path + 'temp.jpg')
+    image = read_image_bgr(filename)
 
     # copy to draw on
     draw = image.copy()
@@ -153,10 +153,12 @@ if __name__ == '__main__':
         plt.axis('off')
         plt.imshow(drawclone[bbox[0]:bbox[2], bbox[1]:bbox[3]])
 
-        segment_path = '_segment_' + str(segment_id) + '.jpg'
-        save_path_segment = path + segment_path
+        segment_path = '/tmp/segment_' + str(segment_id) + '.jpg'
+        save_path_segment = segment_path
         plt.savefig(save_path_segment)
         plt.close()
 
         segment_id += 1
+
+    return segment_id
 
