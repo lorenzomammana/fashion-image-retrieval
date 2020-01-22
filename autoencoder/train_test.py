@@ -37,6 +37,7 @@ if __name__ == '__main__':
     result = model.autoencoder.fit_generator(
         train_sequence,
         validation_data=validation_sequence,
+        class_weight=dataset.class_weights,
         epochs=epochs, workers=n_workers, use_multiprocessing=True, shuffle=False)
 
     plt.clf()
