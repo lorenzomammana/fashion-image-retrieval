@@ -882,8 +882,7 @@ def _list_valid_filenames_in_directory(directory, white_list_formats,
             if is_valid:
                 classes.append(class_indices[subdir])
                 # add filename relative to directory
-                absolute_path = fname#os.path.join(root, fname)
-                filenames.append(os.path.relpath(absolute_path, basedir))
+                filenames.append(fname)
             else:
                 print (fname+" is not valid")
     return classes, filenames

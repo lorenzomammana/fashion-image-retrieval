@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from deepranking.ImageDataGeneratorCustom import ImageDataGeneratorCustom
 import numpy as np
-from keras.applications.vgg16 import VGG16
+from keras.applications.vgg16 import VGG16, preprocess_input
 from keras.layers import *
 from keras.models import Model, load_model
 from keras.optimizers import SGD
@@ -23,7 +23,7 @@ K.set_session(sess)
 
 
 def convnet_model_():
-    vgg_model = VGG16(weights=None, include_top=False)
+    vgg_model = VGG16(weights='imagenet', include_top=False)
     x = vgg_model.output
     x = GlobalAveragePooling2D()(x)
     x = Dense(4096, activation='relu')(x)
@@ -90,13 +90,8 @@ class DataGenerator(object):
 
 
 dg = DataGenerator({
-    "rescale": 1. / 255,
     "horizontal_flip": True,
-    "vertical_flip": True,
-    "zoom_range": 0.2,
-    "shear_range": 0.2,
-    "rotation_range": 30,
-    "fill_mode": 'nearest'
+    "preprocessing_function": preprocess_input
 }, target_size=(224, 224))
 
 batch_size = 8
@@ -128,8 +123,8 @@ def _loss_tensor(y_true, y_pred):
 # deep_rank_model.load_weights('deepranking.h5')
 deep_rank_model.compile(loss=_loss_tensor, optimizer=SGD(lr=0.001, momentum=0.9, nesterov=True))
 
-train_steps_per_epoch = int((15099) / batch_size)
-train_epocs = 25
+train_steps_per_epoch = int(train_generator.n / batch_size)
+train_epocs = 5
 deep_rank_model.fit_generator(train_generator,
                               steps_per_epoch=train_steps_per_epoch,
                               epochs=train_epocs,
