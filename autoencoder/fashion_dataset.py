@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from files import ROOT
+from autoencoder.files import ROOT
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.class_weight import compute_class_weight
 
