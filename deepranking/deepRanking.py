@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import
 from __future__ import print_function
-from deepranking.ImageDataGeneratorCustom import ImageDataGeneratorCustom
 import numpy as np
 from keras.applications.vgg16 import VGG16, preprocess_input
 from keras.layers import *
@@ -11,9 +10,13 @@ from keras.optimizers import SGD
 from keras.preprocessing.image import load_img, img_to_array
 import tensorflow as tf
 from keras import backend as K
-import autoencoder.files as files
 import os
 
+import sys
+
+sys.path.append("..")
+from deepranking.ImageDataGeneratorCustom import ImageDataGeneratorCustom
+import autoencoder.files as files
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 config = tf.ConfigProto()
@@ -30,7 +33,7 @@ def convnet_model_():
     x = Dropout(0.6)(x)
     x = Dense(4096, activation='relu')(x)
     x = Dropout(0.6)(x)
-    x = Lambda(lambda x_: K.l2_normalize(x, axis=1))(x)
+    x = Lambda(lambda x_: K.l2_normalize(x_, axis=1))(x)
     convnet_model = Model(inputs=vgg_model.input, outputs=x)
     return convnet_model
 
@@ -77,7 +80,7 @@ class DataGenerator(object):
     def get_train_generator(self, batch_size):
         return self.idg.flow_from_directory('/home/ubuntu/fashion-dataset/small_classes/',
                                             batch_size=batch_size,
-                                            target_size=self.target_size, shuffle=False,
+                                            target_size=self.target_size, shuffle=True,
                                             triplet_path='deepranking/output/triplets.txt'
                                             )
 
@@ -95,36 +98,33 @@ dg = DataGenerator({
 }, target_size=(224, 224))
 
 batch_size = 8
-batch_size *= 3
 train_generator = dg.get_train_generator(batch_size)
-
-_EPSILON = K.epsilon()
 
 
 def _loss_tensor(y_true, y_pred):
-    y_pred = K.clip(y_pred, _EPSILON, 1.0 - _EPSILON)
-    loss = tf.convert_to_tensor(0, dtype=tf.float32)
+    total_loss = tf.convert_to_tensor(0, dtype=tf.float32)
     g = tf.constant(1.0, shape=[1], dtype=tf.float32)
+    zero = tf.constant(0.0, shape=[1], dtype=tf.float32)
     for i in range(0, batch_size, 3):
         try:
-            q_embedding = y_pred[i + 0]
+            q_embedding = y_pred[i]
             p_embedding = y_pred[i + 1]
             n_embedding = y_pred[i + 2]
             D_q_p = K.sqrt(K.sum((q_embedding - p_embedding) ** 2))
             D_q_n = K.sqrt(K.sum((q_embedding - n_embedding) ** 2))
-            loss = (loss + g + D_q_p - D_q_n)
+            loss = tf.maximum(g + D_q_p - D_q_n, zero)
+            total_loss = total_loss + loss
         except:
             continue
-    loss = loss / (batch_size / 3)
-    zero = tf.constant(0.0, shape=[1], dtype=tf.float32)
-    return tf.maximum(loss, zero)
+    total_loss = total_loss / batch_size
+    return total_loss
 
 
 # deep_rank_model.load_weights('deepranking.h5')
-deep_rank_model.compile(loss=_loss_tensor, optimizer=SGD(lr=0.001, momentum=0.9, nesterov=True))
+deep_rank_model.compile(loss=_loss_tensor, optimizer='adam')
 
 train_steps_per_epoch = int(train_generator.n / batch_size)
-train_epocs = 5
+train_epocs = 2
 deep_rank_model.fit_generator(train_generator,
                               steps_per_epoch=train_steps_per_epoch,
                               epochs=train_epocs,
