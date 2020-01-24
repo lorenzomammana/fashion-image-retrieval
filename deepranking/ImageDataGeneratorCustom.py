@@ -670,13 +670,8 @@ class Iterator(object):
 
     def __init__(self, n, batch_size, shuffle, seed,triplet_path):
         count = 0
-        f = open(triplet_path)
-        f_read = f.read()
-        for line in f_read.split('\n'):
-            if len(line)>1:
-                count += 1
-        f.close()
-        self.n = count * 3#n
+
+        self.n = n
 
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -976,34 +971,15 @@ class DirectoryIterator(Iterator):
         self.num_class = len(classes)
         self.class_indices = dict(zip(classes, range(len(classes))))
 
-        pool = multiprocessing.pool.ThreadPool()
-        function_partial = partial(_count_valid_files_in_directory,
-                                   white_list_formats=white_list_formats,
-                                   follow_links=follow_links)
-        self.samples = sum(pool.map(function_partial,
-                                    (os.path.join(directory, subdir)
-                                     for subdir in classes)))
 
-        print('Found %d images belonging to %d classes.' % (self.samples, self.num_class))
+        with open(triplet_path, 'r') as f:
+            self.filenames = f.read().splitlines()
 
-        # second, build an index of the images in the different class subfolders
-        results = []
+        self.filenames = [item.split(',') for item in self.filenames]
+        self.classes = np.zeros((batch_size * 3,), dtype='int32')
+        self.samples = len(self.filenames)
+        print('Found %d triplets belonging to %d classes.' % (self.samples, self.num_class))
 
-        self.filenames = []
-        self.classes = np.zeros((batch_size,), dtype='int32')
-        i = 0
-        for dirpath in (os.path.join(directory, subdir) for subdir in classes):
-            results.append(pool.apply_async(_list_valid_filenames_in_directory,
-                                            (dirpath, white_list_formats,
-                                             self.class_indices, follow_links,triplet_path)))
-        for res in results:
-            classes, filenames = res.get()
-            #self.classes = np.zeros((len(filenames),), dtype='int32')
-            #self.classes[i:i + len(classes)] = classes
-            self.filenames += filenames
-            i += len(classes)
-        pool.close()
-        pool.join()
         super(DirectoryIterator, self).__init__(self.samples, batch_size, shuffle, seed,triplet_path)
 
     def next(self):
@@ -1015,18 +991,21 @@ class DirectoryIterator(Iterator):
             index_array, current_index, current_batch_size = next(self.index_generator)
         # The transformation of images is not under thread lock
         # so it can be done in parallel
-        batch_x = np.zeros((current_batch_size,) + self.image_shape, dtype=K.floatx())
+        batch_x = np.zeros((current_batch_size * 3,) + self.image_shape, dtype=K.floatx())
         grayscale = self.color_mode == 'grayscale'
         # build batch of image data
+
         for i, j in enumerate(index_array):
-            fname = self.filenames[j]
-            img = load_img(os.path.join(self.directory, fname),
-                           grayscale=grayscale,
-                           target_size=self.target_size)
-            x = img_to_array(img, data_format=self.data_format)
-            x = self.image_data_generator.random_transform(x)
-            x = self.image_data_generator.standardize(x)
-            batch_x[i] = x
+            triplet = self.filenames[j]
+
+            for idx, fname in enumerate(triplet):
+                img = load_img(os.path.join(self.directory, fname),
+                               grayscale=grayscale,
+                               target_size=self.target_size)
+                x = img_to_array(img, data_format=self.data_format)
+                x = self.image_data_generator.random_transform(x)
+                x = self.image_data_generator.standardize(x)
+                batch_x[i * 3 + idx] = x
         # optionally save augmented images to disk for debugging purposes
         if self.save_to_dir:
             for i in range(current_batch_size):
