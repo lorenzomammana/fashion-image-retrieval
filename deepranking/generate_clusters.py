@@ -68,8 +68,7 @@ if __name__ == '__main__':
 
         centroids_class_frequency.append(class_frequency)
 
-    file = open(files.small_images_classes_embeddings / 'features.csv', 'w')
-
+    img_cluster_class = []
     for c in classes_names:
 
         embedding_dir = files.small_images_classes_embeddings / c
@@ -79,10 +78,11 @@ if __name__ == '__main__':
             embedding = np.loadtxt(f)
             prediction = kmeans.predict(np.array([embedding]))[0]
 
-            file.write('/'.join(f.as_posix().split('/')[-2:]) + ',' + str(prediction) + ',' + c + '\n')
             centroids_class_frequency[prediction][c] += 1
+            img_cluster_class.append([f.stem, prediction, c])
 
-    file.close()
+    img_cluster_class = pd.DataFrame(img_cluster_class, columns=['id', 'cluster', 'class'])
+    img_cluster_class.to_csv(files.small_images_classes_features, index=False)
 
     centroids_classes = []
     for i in range(len(centroids_class_frequency)):
