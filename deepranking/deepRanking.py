@@ -3,15 +3,14 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import numpy as np
-from keras.applications.vgg16 import VGG16, preprocess_input
-from keras.layers import *
-from keras.models import Model, load_model
-from keras.optimizers import SGD
-from keras.preprocessing.image import load_img, img_to_array
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
+from fashion_ranking_model import FashionRankingModel
 import tensorflow as tf
 from keras import backend as K
 import os
-
+from classification_models import Classifiers
+from keras_applications.resnext import preprocess_input
+import keras
 import sys
 
 sys.path.append("..")
@@ -25,48 +24,11 @@ sess = tf.Session(config=config)
 K.set_session(sess)
 
 
-def convnet_model_():
-    vgg_model = VGG16(weights='imagenet', include_top=False)
-    x = vgg_model.output
-    x = GlobalAveragePooling2D()(x)
-    x = Dense(4096, activation='relu')(x)
-    x = Dropout(0.6)(x)
-    x = Dense(4096, activation='relu')(x)
-    x = Dropout(0.6)(x)
-    x = Lambda(lambda x_: K.l2_normalize(x_, axis=1))(x)
-    convnet_model = Model(inputs=vgg_model.input, outputs=x)
-    return convnet_model
-
-
-def deep_rank_model():
-    convnet_model = convnet_model_()
-    first_input = Input(shape=(224, 224, 3))
-    first_conv = Conv2D(96, kernel_size=(8, 8), strides=(16, 16), padding='same')(first_input)
-    first_max = MaxPool2D(pool_size=(3, 3), strides=(4, 4), padding='same')(first_conv)
-    first_max = Flatten()(first_max)
-    first_max = Lambda(lambda x: K.l2_normalize(x, axis=1))(first_max)
-
-    second_input = Input(shape=(224, 224, 3))
-    second_conv = Conv2D(96, kernel_size=(8, 8), strides=(32, 32), padding='same')(second_input)
-    second_max = MaxPool2D(pool_size=(7, 7), strides=(2, 2), padding='same')(second_conv)
-    second_max = Flatten()(second_max)
-    second_max = Lambda(lambda x: K.l2_normalize(x, axis=1))(second_max)
-
-    merge_one = concatenate([first_max, second_max])
-
-    merge_two = concatenate([merge_one, convnet_model.output])
-    emb = Dense(4096)(merge_two)
-    l2_norm_final = Lambda(lambda x: K.l2_normalize(x, axis=1))(emb)
-
-    final_model = Model(inputs=[first_input, second_input, convnet_model.input], outputs=l2_norm_final)
-
-    return final_model
-
-
-deep_rank_model = deep_rank_model()
-
-for layer in deep_rank_model.layers:
-    print(layer.name, layer.output_shape)
+def preprocessing(x):
+    return preprocess_input(x, backend=keras.backend,
+                            layers=keras.layers,
+                            models=keras.models,
+                            utils=keras.utils)
 
 
 class DataGenerator(object):
@@ -79,20 +41,20 @@ class DataGenerator(object):
         return self.idg.flow_from_directory('/home/ubuntu/fashion-dataset/small_classes/',
                                             batch_size=batch_size,
                                             target_size=self.target_size, shuffle=True,
-                                            triplet_path='deepranking/output/triplets.txt'
+                                            triplet_path='output/triplets.txt'
                                             )
 
     def get_test_generator(self, batch_size):
         return self.idg.flow_from_directory(files.small_images_classes_directory,
                                             batch_size=batch_size,
                                             target_size=self.target_size, shuffle=False,
-                                            triplet_path='deepranking/output/triplets.txt'
+                                            triplet_path='output/triplets.txt'
                                             )
 
 
 dg = DataGenerator({
     "horizontal_flip": True,
-    "preprocessing_function": preprocess_input
+    "preprocessing_function": preprocessing
 }, target_size=(224, 224))
 
 batch_size = 8
@@ -119,7 +81,15 @@ def _loss_tensor(y_true, y_pred):
 
 
 # deep_rank_model.load_weights('deepranking.h5')
-deep_rank_model.compile(loss=_loss_tensor, optimizer='adam')
+deep_rank_model = FashionRankingModel().compile()
+
+mcp_save_loss = ModelCheckpoint((files.output_directory / 'deepranking_loss.h5').absolute().as_posix(),
+                                save_best_only=True,
+                                save_weights_only=False,
+                                monitor='lambda_4_loss', mode='min')
+
+reduce_lr = ReduceLROnPlateau(monitor='lambda_4_loss', factor=0.1, patience=10, verbose=0, mode='auto',
+                              min_delta=0.0001, cooldown=0, min_lr=0)
 
 train_steps_per_epoch = int(train_generator.n / batch_size)
 train_epocs = 5
@@ -127,13 +97,14 @@ deep_rank_model.fit_generator(train_generator,
                               steps_per_epoch=train_steps_per_epoch,
                               epochs=train_epocs,
                               verbose=1,
+                              callbacks=[mcp_save_loss, reduce_lr],
                               use_multiprocessing=False,
                               workers=16,
                               max_queue_size=32
                               )
 
 model_path = files.output_directory / "deepranking.h5"
-deep_rank_model.save_weights(model_path)
+deep_rank_model.save(model_path.absolute().as_posix())
 # f = open('deepranking.json','w')
 # f.write(deep_rank_model.to_json())
 # f.close()
