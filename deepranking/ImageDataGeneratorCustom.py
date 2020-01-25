@@ -1056,6 +1056,7 @@ class DirectoryIterator(Iterator):
                 batch_y[i * 3 + 0] = self.y_anc[j]
                 batch_y[i * 3 + 1] = self.y_pos[j]
                 batch_y[i * 3 + 2] = self.y_neg[j]
+
         else:
             return batch_x
-        return [batch_x, batch_x, batch_x], batch_y
+        return [batch_x, batch_x, batch_x], [batch_y, batch_y]
