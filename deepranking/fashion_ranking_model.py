@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 from __future__ import print_function
-from keras.applications.vgg16 import VGG16
+
+from classification_models import Classifiers
 from keras.layers import *
 from keras.models import Model
 from keras import backend as K
 from keras.optimizers import SGD
 import tensorflow as tf
+
 
 class FashionRankingModel():
 
@@ -13,10 +15,9 @@ class FashionRankingModel():
 
         self.convnet = None
         self.deeprank = None
-        self.optimizer = SGD(lr=0.001, momentum=0.9, nesterov=True)
+        self.optimizer = 'adam'
         self.loss = None
         self.batch_size = 8
-        self.batch_size *= 3
 
         self.__build_convnet__()
         self.__build_deeprank__()
@@ -25,28 +26,27 @@ class FashionRankingModel():
     def compile(self, weights=None):
 
         if weights is not None:
-            self.deeprank.load_weights(weights)
+            self.deeprank.load_weights(weights, by_name=True)
 
-        self.deeprank.compile(loss=self.loss, optimizer=self.optimizer)
+        self.deeprank.compile(loss=self.loss, optimizer=self.optimizer, metrics=['acc'])
 
         return self.deeprank
 
     def __build_convnet__(self):
-
-        vgg_model = VGG16(weights='imagenet', include_top=False)
-        x = vgg_model.output
+        resnet, _ = Classifiers.get('resnet18')
+        base_model = resnet(input_shape=(224, 224, 3), include_top=False, weights='imagenet')
+        x = base_model.output
         x = GlobalAveragePooling2D()(x)
         x = Dense(4096, activation='relu')(x)
         x = Dropout(0.6)(x)
         x = Dense(4096, activation='relu')(x)
         x = Dropout(0.6)(x)
-        x = Lambda(lambda x_: K.l2_normalize(x, axis=1))(x)
-        convnet_model = Model(inputs=vgg_model.input, outputs=x)
-        
+        x = Lambda(lambda x_: K.l2_normalize(x_, axis=1))(x)
+        convnet_model = Model(inputs=base_model.input, outputs=x)
+
         self.convnet = convnet_model
 
     def __build_deeprank__(self):
-        
         convnet_model = self.convnet
         first_input = Input(shape=(224, 224, 3))
         first_conv = Conv2D(96, kernel_size=(8, 8), strides=(16, 16), padding='same')(first_input)
@@ -64,37 +64,33 @@ class FashionRankingModel():
 
         merge_two = concatenate([merge_one, convnet_model.output])
         emb = Dense(4096)(merge_two)
+        classification_layer = Dense(16, activation='softmax')(emb)
         l2_norm_final = Lambda(lambda x: K.l2_normalize(x, axis=1))(emb)
 
-        final_model = Model(inputs=[first_input, second_input, convnet_model.input], outputs=l2_norm_final)
+        final_model = Model(inputs=[first_input, second_input, convnet_model.input], outputs=[l2_norm_final,
+                                                                                              classification_layer])
 
         self.deeprank = final_model
 
     def __create_loss_function__(self):
-
-        _EPSILON = K.epsilon()
         batch_size = self.batch_size
 
         def loss_tensor(y_true, y_pred):
-
-            y_pred = K.clip(y_pred, _EPSILON, 1.0 - _EPSILON)
-            loss = tf.convert_to_tensor(0, dtype=tf.float32)
+            total_loss = tf.convert_to_tensor(0, dtype=tf.float32)
             g = tf.constant(1.0, shape=[1], dtype=tf.float32)
-            
+            zero = tf.constant(0.0, shape=[1], dtype=tf.float32)
             for i in range(0, batch_size, 3):
                 try:
-                    q_embedding = y_pred[i + 0]
+                    q_embedding = y_pred[i]
                     p_embedding = y_pred[i + 1]
                     n_embedding = y_pred[i + 2]
                     D_q_p = K.sqrt(K.sum((q_embedding - p_embedding) ** 2))
                     D_q_n = K.sqrt(K.sum((q_embedding - n_embedding) ** 2))
-                    loss = (loss + g + D_q_p - D_q_n)
+                    loss = tf.maximum(g + D_q_p - D_q_n, zero)
+                    total_loss = total_loss + loss
                 except:
                     continue
-            
-            loss = loss / (batch_size / 3)
-            zero = tf.constant(0.0, shape=[1], dtype=tf.float32)
-            
-            return tf.maximum(loss, zero)
+            total_loss = total_loss / batch_size
+            return total_loss
 
-        self.loss = loss_tensor
+        self.loss = [loss_tensor, 'categorical_crossentropy']
