@@ -45,12 +45,12 @@ if __name__ == '__main__':
 
         # Update kmeans
         if len(embedding_values) % batch_size == 0:
-            kmeans.partial_fit(np.array(embedding_values))
+            kmeans.partial_fit(np.array(embedding_values).squeeze())
             embedding_values = []
 
     # Update kmeans
     if len(embedding_values) > 0:
-        kmeans.partial_fit(np.array(embedding_values))
+        kmeans.partial_fit(np.array(embedding_values).squeeze())
         embedding_values = []
 
     # Save kmeans object to file
