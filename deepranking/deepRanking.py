@@ -68,8 +68,6 @@ deep_rank_model = deep_rank_model()
 for layer in deep_rank_model.layers:
     print(layer.name, layer.output_shape)
 
-model_path = "./deep_ranking"
-
 
 class DataGenerator(object):
     def __init__(self, params, target_size=(224, 224)):
@@ -124,7 +122,7 @@ def _loss_tensor(y_true, y_pred):
 deep_rank_model.compile(loss=_loss_tensor, optimizer='adam')
 
 train_steps_per_epoch = int(train_generator.n / batch_size)
-train_epocs = 2
+train_epocs = 5
 deep_rank_model.fit_generator(train_generator,
                               steps_per_epoch=train_steps_per_epoch,
                               epochs=train_epocs,
@@ -134,7 +132,7 @@ deep_rank_model.fit_generator(train_generator,
                               max_queue_size=32
                               )
 
-model_path = "deepranking.h5"
+model_path = files.output_directory / "deepranking.h5"
 deep_rank_model.save_weights(model_path)
 # f = open('deepranking.json','w')
 # f.write(deep_rank_model.to_json())

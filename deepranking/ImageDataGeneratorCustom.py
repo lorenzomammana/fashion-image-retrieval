@@ -2,8 +2,8 @@
 Can easily be extended to include new transformations,
 new preprocessing methods, etc...
 """
-#from __future__ import absolute_import
-#from __future__ import print_function
+# from __future__ import absolute_import
+# from __future__ import print_function
 
 import numpy as np
 import re
@@ -17,6 +17,7 @@ import multiprocessing.pool
 from functools import partial
 
 import keras.backend as K
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, LabelBinarizer
 
 try:
     from PIL import Image as pil_image
@@ -320,7 +321,6 @@ def list_pictures(directory, ext='jpg|jpeg|bmp|png|ppm'):
 
 
 class ImageDataGeneratorCustom(object):
-
     """Generate minibatches of image data with real-time data augmentation.
     # Arguments
         featurewise_center: set input mean to 0 over the dataset.
@@ -440,7 +440,7 @@ class ImageDataGeneratorCustom(object):
             save_prefix=save_prefix,
             save_format=save_format)
 
-    def flow_from_directory(self, directory,triplet_path,
+    def flow_from_directory(self, directory, triplet_path,
                             target_size=(256, 256), color_mode='rgb',
                             classes=None, class_mode='categorical',
                             batch_size=32, shuffle=True, seed=None,
@@ -451,7 +451,7 @@ class ImageDataGeneratorCustom(object):
                             ):
 
         return DirectoryIterator(
-            directory, self,triplet_path,
+            directory, self, triplet_path,
             target_size=target_size, color_mode=color_mode,
             classes=classes, class_mode=class_mode,
             data_format=self.data_format,
@@ -565,8 +565,8 @@ class ImageDataGeneratorCustom(object):
 
         if shear != 0:
             shear_matrix = np.array([[1, -np.sin(shear), 0],
-                                    [0, np.cos(shear), 0],
-                                    [0, 0, 1]])
+                                     [0, np.cos(shear), 0],
+                                     [0, 0, 1]])
             transform_matrix = shear_matrix if transform_matrix is None else np.dot(transform_matrix, shear_matrix)
 
         if zx != 1 or zy != 1:
@@ -622,9 +622,11 @@ class ImageDataGeneratorCustom(object):
             warnings.warn(
                 'Expected input to be images (as Numpy array) '
                 'following the data format convention "' + self.data_format + '" '
-                '(channels on axis ' + str(self.channel_axis) + '), i.e. expected '
-                'either 1, 3 or 4 channels on axis ' + str(self.channel_axis) + '. '
-                'However, it was passed an array with shape ' + str(x.shape) +
+                                                                              '(channels on axis ' + str(
+                    self.channel_axis) + '), i.e. expected '
+                                         'either 1, 3 or 4 channels on axis ' + str(self.channel_axis) + '. '
+                                                                                                         'However, it was passed an array with shape ' + str(
+                    x.shape) +
                 ' (' + str(x.shape[self.channel_axis]) + ' channels).')
 
         if seed is not None:
@@ -668,7 +670,7 @@ class Iterator(object):
         seed: Random seeding for data shuffling.
     """
 
-    def __init__(self, n, batch_size, shuffle, seed,triplet_path):
+    def __init__(self, n, batch_size, shuffle, seed, triplet_path):
         count = 0
 
         self.n = n
@@ -759,9 +761,11 @@ class NumpyArrayIterator(Iterator):
         if self.x.shape[channels_axis] not in {1, 3, 4}:
             warnings.warn('NumpyArrayIterator is set to use the '
                           'data format convention "' + data_format + '" '
-                          '(channels on axis ' + str(channels_axis) + '), i.e. expected '
-                          'either 1, 3 or 4 channels on axis ' + str(channels_axis) + '. '
-                          'However, it was passed an array with shape ' + str(self.x.shape) +
+                                                                     '(channels on axis ' + str(
+                channels_axis) + '), i.e. expected '
+                                 'either 1, 3 or 4 channels on axis ' + str(channels_axis) + '. '
+                                                                                             'However, it was passed an array with shape ' + str(
+                self.x.shape) +
                           ' (' + str(self.x.shape[channels_axis]) + ' channels).')
         if y is not None:
             self.y = np.asarray(y)
@@ -815,6 +819,7 @@ def _count_valid_files_in_directory(directory, white_list_formats, follow_links)
         the count of files with extension in `white_list_formats` contained in
         the directory.
     """
+
     def _recursive_list(subpath):
         return sorted(os.walk(subpath, followlinks=follow_links), key=lambda tpl: tpl[0])
 
@@ -832,7 +837,7 @@ def _count_valid_files_in_directory(directory, white_list_formats, follow_links)
 
 
 def _list_valid_filenames_in_directory(directory, white_list_formats,
-                                       class_indices, follow_links,triplet_path):
+                                       class_indices, follow_links, triplet_path):
     """List paths of files in `subdir` relative from `directory` whose extensions are in `white_list_formats`.
     # Arguments
         directory: absolute path to a directory containing the files to list.
@@ -846,6 +851,7 @@ def _list_valid_filenames_in_directory(directory, white_list_formats,
             `directory`'s parent (e.g., if `directory` is "dataset/class1",
             the filenames will be ["class1/file1.jpg", "class1/file2.jpg", ...]).
     """
+
     def _recursive_list(subpath):
         f = open(triplet_path)
         f_read = f.read()
@@ -854,13 +860,13 @@ def _list_valid_filenames_in_directory(directory, white_list_formats,
         filenames = []
         for triplet in triplets:
             triplet = triplet.split(',')
-            if len(triplet)!=3:
+            if len(triplet) != 3:
                 continue
-            filenames +=[triplet[0]]
-            filenames +=[triplet[1]]
-            filenames +=[triplet[2]]
-        to_return_tuple= tuple()
-        to_return_tuple = (os.path.abspath(subpath),[],filenames,)
+            filenames += [triplet[0]]
+            filenames += [triplet[1]]
+            filenames += [triplet[2]]
+        to_return_tuple = tuple()
+        to_return_tuple = (os.path.abspath(subpath), [], filenames,)
         return [to_return_tuple]
 
     classes = []
@@ -879,7 +885,7 @@ def _list_valid_filenames_in_directory(directory, white_list_formats,
                 # add filename relative to directory
                 filenames.append(fname)
             else:
-                print (fname+" is not valid")
+                print(fname + " is not valid")
     return classes, filenames
 
 
@@ -919,7 +925,7 @@ class DirectoryIterator(Iterator):
             (if `save_to_dir` is set).
     """
 
-    def __init__(self, directory, image_data_generator,triplet_path,
+    def __init__(self, directory, image_data_generator, triplet_path,
                  target_size=(256, 256), color_mode='rgb',
                  classes=None, class_mode='categorical',
                  batch_size=32, shuffle=True, seed=None,
@@ -971,16 +977,37 @@ class DirectoryIterator(Iterator):
         self.num_class = len(classes)
         self.class_indices = dict(zip(classes, range(len(classes))))
 
-
         with open(triplet_path, 'r') as f:
             self.filenames = f.read().splitlines()
 
         self.filenames = [item.split(',') for item in self.filenames]
+
+        encoder = LabelEncoder()
+
+        encoder.fit([
+            'Handbags', 'Belts', 'Casual Shoes',
+            'Sports Shoes', 'Heels', 'Sandals',
+            'Formal Shoes', 'Flats', 'Dresses',
+            'Sunglasses', 'Jeans', 'Trousers',
+            'Tshirts', 'Shirts', 'Tops', 'Shorts'
+        ])
+        b_encoder = OneHotEncoder(sparse=False)
+        b_encoder.fit(np.arange(0, 16).reshape(-1, 1))
+
+        self.y = np.array([[x.split('/')[0] for x in inner] for inner in self.filenames])
+        self.y[:, 0] = encoder.transform(self.y[:, 0])
+        self.y[:, 1] = encoder.transform(self.y[:, 1])
+        self.y[:, 2] = encoder.transform(self.y[:, 2])
+        self.y = self.y.astype(int)
+
+        self.y_anc = b_encoder.transform(self.y[:, 0].reshape(-1, 1))
+        self.y_pos = b_encoder.transform(self.y[:, 1].reshape(-1, 1))
+        self.y_neg = b_encoder.transform(self.y[:, 2].reshape(-1, 1))
         self.classes = np.zeros((batch_size * 3,), dtype='int32')
         self.samples = len(self.filenames)
         print('Found %d triplets belonging to %d classes.' % (self.samples, self.num_class))
 
-        super(DirectoryIterator, self).__init__(self.samples, batch_size, shuffle, seed,triplet_path)
+        super(DirectoryIterator, self).__init__(self.samples, batch_size, shuffle, seed, triplet_path)
 
     def next(self):
         """For python 2.x.
@@ -1024,8 +1051,11 @@ class DirectoryIterator(Iterator):
             batch_y = self.classes[index_array].astype(K.floatx())
         elif self.class_mode == 'categorical':
             batch_y = np.zeros((len(batch_x), self.num_class), dtype=K.floatx())
-            for i, label in enumerate(self.classes):
-                batch_y[i, label] = 1.
+
+            for i, j in enumerate(index_array):
+                batch_y[i * 3 + 0] = self.y_anc[j]
+                batch_y[i * 3 + 1] = self.y_pos[j]
+                batch_y[i * 3 + 2] = self.y_neg[j]
         else:
             return batch_x
-        return [batch_x,batch_x,batch_x], batch_y
+        return [batch_x, batch_x, batch_x], batch_y
