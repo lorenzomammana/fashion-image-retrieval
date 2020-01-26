@@ -93,6 +93,6 @@ if __name__ == '__main__':
         sc = plt.scatter(x_1[i], x_2[i], marker='*', s=5)
         scatter_centroids.append(sc)
 
-    plt.legend(scatter_centroids, np.arange(x_embedded.shape[0]), scatterpoints=1)
+    plt.legend(scatter_centroids, np.arange(x_embedded.shape[0]), scatterpoints=1, loc=9, bbox_to_anchor=(0.5, -0.1), ncol=4)
     plt.tight_layout()
     plt.savefig(files.clusters_visualization_path / 'centroids.pdf')
