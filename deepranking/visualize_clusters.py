@@ -37,6 +37,7 @@ if __name__ == '__main__':
     if METH0D == 'PCA':
         x_embedded = PCA(n_components=n_components).fit_transform(embedding_values)
 
+    # Plot single file clusters
     for name, color in zip(classes_names, classes_colors):
 
         plot_vals = []
@@ -52,6 +53,26 @@ if __name__ == '__main__':
         plt.legend([sc], [name], scatterpoints=1)
         plt.tight_layout()
         plt.savefig(files.clusters_visualization_path / '{}.pdf'.format(name))
+
+    # Plot all clusters in one file
+    all_scatter_clusters = []
+    for name, color in zip(classes_names, classes_colors):
+
+        plot_vals = []
+
+        for i in range(x_embedded.shape[0]):
+
+            if embedding_values_classes[i] == name:
+                plot_vals.append([x_embedded[i, 0], x_embedded[i, 1]])
+
+        plot_vals = np.array(plot_vals)
+        sc = plt.scatter(plot_vals[:, 0], plot_vals[:, 1], s=1, color=color)
+        all_scatter_clusters.append(sc)
+    
+    plt.clf()
+    plt.legend(all_scatter_clusters, classes_names, scatterpoints=1)
+    plt.tight_layout()
+    plt.savefig(files.clusters_visualization_path / 'all_clusters.pdf')
 
     kmeans = joblib.load(files.small_images_classes_kmeans)
     embedding_values = kmeans.cluster_centers_
