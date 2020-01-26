@@ -56,6 +56,8 @@ if __name__ == '__main__':
     # For each class
     images = np.random.permutation(images)
 
+    print('Computing kmeans...')
+    
     for label, i in tqdm(images):
 
         # Compute embedding value and save to txt file
@@ -80,6 +82,8 @@ if __name__ == '__main__':
 
     # Save kmeans object to file
     joblib.dump(kmeans, files.small_images_classes_kmeans)
+
+    print('Computing clusters fashion class...')
 
     # Assign each cluster to a specific class
     centroids_class_frequency = []
