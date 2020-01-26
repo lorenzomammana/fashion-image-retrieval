@@ -18,7 +18,7 @@ def imageHandler(bot, message, chat_id, local_filename):
 
     bot.sendMessage(chat_id, "I've found " + str(num_images) + " potential clothes")
 
-    for i in range(num_images + 1):
+    for i in range(num_images):
         bot.sendImage(chat_id, '/tmp/segment_' + str(i) + '.jpg', "")
 
 
