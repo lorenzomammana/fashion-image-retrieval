@@ -56,6 +56,7 @@ if __name__ == '__main__':
 
     # Plot all clusters in one file
     all_scatter_clusters = []
+    plt.clf()
     for name, color in zip(classes_names, classes_colors):
 
         plot_vals = []
@@ -69,7 +70,6 @@ if __name__ == '__main__':
         sc = plt.scatter(plot_vals[:, 0], plot_vals[:, 1], s=1, color=color)
         all_scatter_clusters.append(sc)
     
-    plt.clf()
     plt.legend(all_scatter_clusters, classes_names, scatterpoints=1)
     plt.tight_layout()
     plt.savefig(files.clusters_visualization_path / 'all_clusters.pdf')
