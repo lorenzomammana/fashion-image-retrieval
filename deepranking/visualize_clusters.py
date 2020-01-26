@@ -50,7 +50,7 @@ if __name__ == '__main__':
         plt.clf()
         plot_vals = np.array(plot_vals)
         sc = plt.scatter(plot_vals[:, 0], plot_vals[:, 1], s=1, color=color)
-        plt.legend([sc], [name], scatterpoints=1)
+        plt.legend([sc], [name], scatterpoints=1, loc=9, bbox_to_anchor=(0.5, -0.1), ncol=1)
         plt.tight_layout()
         plt.savefig(files.clusters_visualization_path / '{}.pdf'.format(name))
 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
         sc = plt.scatter(plot_vals[:, 0], plot_vals[:, 1], s=1, color=color)
         all_scatter_clusters.append(sc)
     
-    plt.legend(all_scatter_clusters, classes_names, scatterpoints=1)
+    plt.legend(all_scatter_clusters, classes_names, scatterpoints=1, loc=9, bbox_to_anchor=(0.5, -0.1), ncol=4)
     plt.tight_layout()
     plt.savefig(files.clusters_visualization_path / 'all_clusters.pdf')
 
