@@ -10,11 +10,12 @@ import numpy as np
 import os
 import shutil
 import joblib
-from keras.applications.vgg16 import preprocess_input
+from keras_applications.resnext import preprocess_input
 from tqdm import tqdm
 from keras.models import load_model
 import tensorflow as tf
 from keras import backend as K
+import keras
 
 
 def loss_tensor(y_true, y_pred, batch_size=8):
@@ -60,7 +61,7 @@ if __name__ == '__main__':
         # Compute embedding value and save to txt file
         img = load_img(files.small_images_classes_directory / label / i, target_size=(224, 224))
         img = img_to_array(img)
-        img = preprocess_input(img)
+        img = preprocess_input(img, backend=keras.backend, layers=keras.layers, models=keras.models, utils=keras.utils)
         img = np.expand_dims(img, axis=0)
 
         ev = model.predict([img, img, img])[0]
@@ -79,8 +80,6 @@ if __name__ == '__main__':
 
     # Save kmeans object to file
     joblib.dump(kmeans, files.small_images_classes_kmeans)
-
-    # kmeans = joblib.load(files.small_images_classes_kmeans)
 
     # Assign each cluster to a specific class
     centroids_class_frequency = []
