@@ -57,6 +57,15 @@ dg = DataGenerator({
     "preprocessing_function": preprocessing
 }, target_size=(224, 224))
 
+# dg = DataGenerator({
+#     "horizontal_flip": True,
+#     "channel_shift_range": 80,
+#     "zoom_range": [0.5, 1.5],
+#     "rotation_range": 10,
+#     "fill_mode": 'reflect',
+#     "preprocessing_function": preprocessing
+# }, target_size=(224, 224))
+
 batch_size = 8
 train_generator = dg.get_train_generator(batch_size)
 
@@ -88,7 +97,7 @@ mcp_save_loss = ModelCheckpoint((files.output_directory / 'deepranking_loss.h5')
                                 save_weights_only=False,
                                 monitor='lambda_4_loss', mode='min')
 
-reduce_lr = ReduceLROnPlateau(monitor='lambda_4_loss', factor=0.1, patience=10, verbose=0, mode='auto',
+reduce_lr = ReduceLROnPlateau(monitor='lambda_4_loss', factor=0.1, patience=10, verbose=1, mode='min',
                               min_delta=0.0001, cooldown=0, min_lr=0)
 
 train_steps_per_epoch = int(train_generator.n / batch_size)
