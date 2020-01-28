@@ -16,6 +16,11 @@ if __name__ == '__main__':
 
     classes_dirs = [d for d in files.small_images_classes_directory.iterdir() if d.is_dir()]
     classes_names = [d.parts[-1] for d in classes_dirs]
+    classes_count = []
+    
+    for n in classes_dirs:
+        count = len([f for f in n.iterdir() if f.is_file()])
+        classes_count.append(count)
 
     images = []
     for p, c in zip(classes_dirs, classes_names):
@@ -31,7 +36,11 @@ if __name__ == '__main__':
 
     print('Computing embedding...')
 
-    sample_per_class_needed = 10
+    perc_factor = 0.1
+    sample_per_class_needed = {}
+    for c, n in zip(classes_names, classes_count):
+        sample_per_class_needed[c] = int(n * perc_factor)
+
     centroids_initialization = {}
     for c in classes_names:
         centroids_initialization[c] = []
@@ -56,7 +65,7 @@ if __name__ == '__main__':
         embedding_files.append(embedding_path)
         np.savetxt(embedding_path, ev)
 
-        if len(centroids_initialization[label]) < sample_per_class_needed:
+        if len(centroids_initialization[label]) < sample_per_class_needed[label]:
             centroids_initialization[label].append(ev.squeeze())
 
     print('Computing clustering...')
