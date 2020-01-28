@@ -1,5 +1,6 @@
 import files
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
@@ -8,7 +9,7 @@ from clustering_strategy import ClusteringStrategy
 if __name__ == '__main__':
     
     METH0D = 'PCA' # 'TSNE' 'PCA'
-    n_components = 2
+    n_components = 3
 
     classes_dirs = [d for d in files.small_images_classes_directory.iterdir() if d.is_dir()]
     classes_names = [d.parts[-1] for d in classes_dirs]
@@ -31,12 +32,26 @@ if __name__ == '__main__':
             embedding_values_classes.append(c)
 
     embedding_values = np.array(embedding_values)
-    print('{} dataset computation...'.format(METH0D))
+    print('{} dataset computation with {} components...'.format(METH0D, n_components))
     if METH0D == 'TSNE':
         x_embedded = TSNE(n_components=n_components).fit_transform(embedding_values)
     
     if METH0D == 'PCA':
         x_embedded = PCA(n_components=n_components).fit_transform(embedding_values)
+
+    save_embeddings = []
+
+    for name, color in zip(classes_names, classes_colors):
+
+        for i in range(x_embedded.shape[0]):
+            save_embeddings.append(x_embedded[i].tolist() + [name])
+
+    columns = ['x_{}'.format(i) for i in range(n_components)] + ['class']
+    save_embeddings = pd.DataFrame(save_embeddings, columns=columns)
+    save_embeddings.to_csv(files.reduced_embeddings_path, index=False)
+
+    if n_components > 2:
+        exit(0)
 
     # Plot single file clusters
     for name, color in zip(classes_names, classes_colors):
