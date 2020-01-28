@@ -7,12 +7,25 @@ import sklearn.metrics.cluster as cscores
 
 class ClusteringStrategy():
 
-    def __init__(self, k):
+    def __init__(self, k, batch_size):
 
         self.k = k
-        self.kmeans = MiniBatchKMeans(n_clusters=self.k, batch_size=128)
+        self.batch_size = batch_size
+        self.kmeans = MiniBatchKMeans(n_clusters=self.k, batch_size=self.batch_size)
         self.labels_true = []
         self.labels_pred = []
+
+    def init_centroids(self, c_dict):
+
+        centroids = []
+        for _, v in c_dict.items():
+            data = np.array(v)
+            data = np.mean(data, axis=0)
+            centroids.append(data)
+
+        centroids = np.array(centroids)
+
+        self.kmeans = MiniBatchKMeans(n_clusters=self.k, init=centroids, batch_size=self.batch_size)
 
     def fit_batch(self, x):
 

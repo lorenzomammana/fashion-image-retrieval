@@ -24,12 +24,19 @@ if __name__ == '__main__':
     embedding_values = []
 
     batch_size = 128
-    strategy = ClusteringStrategy(n_classes)
+    strategy = ClusteringStrategy(n_classes, batch_size)
 
     # For each class
     images = np.random.permutation(images)
 
-    print('Computing clustering...')
+    print('Computing embedding...')
+
+    sample_per_class_needed = 10
+    centroids_initialization = {}
+    for c in classes_names:
+        centroids_initialization[c] = []
+
+    embedding_files = []
 
     for label, i in tqdm(images):
 
@@ -45,13 +52,29 @@ if __name__ == '__main__':
         # La ignoro nell'output
         ev = ev[:, 1:]
         embedding_values.append(ev)
-        np.savetxt(files.small_images_classes_embeddings / label / i.replace('jpg', 'txt'), ev)
+        embedding_path = files.small_images_classes_embeddings / label / i.replace('jpg', 'txt')
+        embedding_files.append(embedding_path)
+        np.savetxt(embedding_path, ev)
+
+        if len(centroids_initialization[label]) < sample_per_class_needed:
+            centroids_initialization[label].append(ev.squeeze())
+
+    print('Computing clustering...')
+
+    # Init clustering centroids
+    strategy.init_centroids(centroids_initialization)
+
+    embedding_values = []
+    for f in tqdm(embedding_files):
+
+        ev = np.loadtxt(f)
+        embedding_values.append(ev)
 
         # Update clustering
         if len(embedding_values) % batch_size == 0:
             strategy.fit_batch(np.array(embedding_values).squeeze())
             embedding_values = []
-
+    
     # Update clustering
     if len(embedding_values) > 0:
         strategy.fit_batch(np.array(embedding_values).squeeze())

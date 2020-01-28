@@ -14,6 +14,7 @@ if __name__ == '__main__':
     classes_names = [d.parts[-1] for d in classes_dirs]
     classes_colors = np.random.rand(len(classes_names), 3)
 
+    batch_size = 128
     embedding_values = []
     embedding_values_classes = []
 
@@ -74,7 +75,7 @@ if __name__ == '__main__':
     plt.tight_layout()
     plt.savefig(files.clusters_visualization_path / 'all_clusters.pdf')
 
-    strategy = ClusteringStrategy(len(classes_names))
+    strategy = ClusteringStrategy(len(classes_names), batch_size)
     strategy.load()
     kmeans = strategy.kmeans
 
