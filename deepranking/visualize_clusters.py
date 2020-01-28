@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-import joblib
+from clustering_strategy import ClusteringStrategy
 
 if __name__ == '__main__':
     
@@ -74,7 +74,10 @@ if __name__ == '__main__':
     plt.tight_layout()
     plt.savefig(files.clusters_visualization_path / 'all_clusters.pdf')
 
-    kmeans = joblib.load(files.small_images_classes_kmeans)
+    strategy = ClusteringStrategy(len(classes_names))
+    strategy.load()
+    kmeans = strategy.kmeans
+
     embedding_values = kmeans.cluster_centers_
     print('{} centroid computation...'.format(METH0D))
     if METH0D == 'TSNE':
