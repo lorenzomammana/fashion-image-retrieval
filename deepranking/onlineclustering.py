@@ -71,7 +71,7 @@ if __name__ == '__main__':
     print('Computing clustering...')
 
     # Init clustering centroids
-    strategy.init_centroids(centroids_initialization)
+    # strategy.init_centroids(centroids_initialization)
 
     embedding_values = []
     for f in tqdm(embedding_files):
