@@ -25,7 +25,7 @@ class FashionSimilarity:
         img = preprocess_input(img, backend=keras.backend, layers=keras.layers, models=keras.models, utils=keras.utils)
         img = np.expand_dims(img, axis=0)
 
-        ev, label = self.model.predict([img, img, img, np.zeros(1)])
+        ev = self.model.predict([img, img, img, np.zeros(1)])[0]
         ev = ev[:, 1:]
         centroid = self.kmeans.predict(ev)[0]
 

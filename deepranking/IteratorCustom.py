@@ -7,6 +7,7 @@ from __future__ import print_function
 import os
 import threading
 import numpy as np
+import pandas as pd
 from keras_preprocessing import get_keras_submodule
 
 try:
@@ -14,6 +15,7 @@ try:
 except ImportError:
     IteratorType = object
 
+from keras.utils import Sequence
 from keras_preprocessing.image.utils import (array_to_img,
                                              img_to_array,
                                              load_img)
@@ -219,6 +221,24 @@ class BatchFromFilesMixin():
         # Returns
             A batch of transformed samples.
         """
+        y = self.classes[index_array]
+
+        # creo una matrice indice - classe
+        batch = np.concatenate([np.expand_dims(index_array, 1), np.expand_dims(y, 1)], axis=1)
+        batch = pd.DataFrame(batch, columns=['idx', 'class'])
+        batch = batch.groupby('class')
+
+        # Per ogni classe genero 8 sample
+        # batch totale 128
+        try:
+            batch = batch.apply(lambda _x: _x.sample(8).reset_index(drop=True))
+        except ValueError:
+            batch = batch.apply(lambda _x: _x.sample(8, replace=True).reset_index(drop=True))
+            print("This batch is garbage")
+
+        index_array = np.array(batch['idx'])
+        index_array = np.random.permutation(index_array)
+
         batch_x = np.zeros((len(index_array),) + self.image_shape, dtype=self.dtype)
         # build batch of image data
         # self.filepaths is dynamic, is better to call it once outside the loop

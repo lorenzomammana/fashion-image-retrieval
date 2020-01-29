@@ -2,11 +2,12 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from classification_models import Classifiers
-from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from keras.layers import *
 from keras.models import Model
 from keras import backend as K
-
+from keras.optimizers import Adam
+import numpy as np
 import files
 from OnlineDataGenerator import ImageDataGenerator
 from fashion_ranking_model import FashionRankingModel
@@ -35,18 +36,18 @@ if __name__ == '__main__':
     input_image3 = Input(shape=(224, 224, 3), name='input_image3')
     input_labels = Input(shape=(1,), name='input_label')
 
-    embeddings, classification = base_network.deeprank(
-        [input_image1, input_image2, input_image3])  # output of network -> embeddings
+    embeddings, classification = base_network.deeprank([input_image1, input_image2, input_image3])  # output of network -> embeddings
     labels_plus_embeddings = concatenate([input_labels, embeddings])
 
     model = Model(inputs=[input_image1, input_image2, input_image3, input_labels],
                   outputs=[labels_plus_embeddings, classification])
 
     model.compile(loss=[triplet_loss_adapted_from_tf, 'categorical_crossentropy'],
-                  optimizer='adam',
+                  loss_weights=[2, 1],
+                  optimizer=Adam(lr=0.001),
                   metrics=['acc'])
 
-    batch_size = 128
+    batch_size = 1242
     dg = ImageDataGenerator(
         horizontal_flip=True,
         brightness_range=[0.7, 1.3],
@@ -61,21 +62,23 @@ if __name__ == '__main__':
                                              class_mode='categorical'
                                              )
 
-    mcp_save_loss = ModelCheckpoint((files.output_directory / 'deepranking_loss.h5').absolute().as_posix(),
+    mcp_save_loss = ModelCheckpoint((files.output_directory / 'onlinemining_loss.h5').absolute().as_posix(),
                                     save_best_only=True,
                                     save_weights_only=False,
-                                    monitor='concatenate_3_loss', mode='min')
+                                    monitor='loss', mode='min')
 
-    reduce_lr = ReduceLROnPlateau(monitor='concatenate_3_loss', factor=0.1, patience=5, verbose=1, mode='min',
-                                  min_delta=0.001, cooldown=0, min_lr=0)
+    reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.1, patience=15, verbose=1, mode='min',
+                                  min_delta=0.01, cooldown=0, min_lr=0)
 
-    train_steps_per_epoch = int(train_generator.n / batch_size)
-    train_epocs = 20
+    stop = EarlyStopping(monitor='loss', patience=20, min_delta=0.01)
+
+    train_steps_per_epoch = np.ceil(train_generator.n / batch_size)
+    train_epocs = 300
     model.fit_generator(train_generator,
                         steps_per_epoch=train_steps_per_epoch,
                         epochs=train_epocs,
                         verbose=1,
-                        callbacks=[mcp_save_loss, reduce_lr],
+                        callbacks=[mcp_save_loss, reduce_lr, stop],
                         use_multiprocessing=False,
                         workers=16,
                         max_queue_size=32
