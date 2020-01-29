@@ -9,7 +9,7 @@ from clustering_strategy import ClusteringStrategy
 if __name__ == '__main__':
     
     METH0D = 'PCA' # 'TSNE' 'PCA'
-    n_components = 3
+    n_components = 2
 
     classes_dirs = [d for d in files.small_images_classes_directory.iterdir() if d.is_dir()]
     classes_names = [d.parts[-1] for d in classes_dirs]
@@ -41,10 +41,12 @@ if __name__ == '__main__':
 
     save_embeddings = []
 
-    for name, color in zip(classes_names, classes_colors):
+    for name in classes_names:
 
         for i in range(x_embedded.shape[0]):
-            save_embeddings.append(x_embedded[i].tolist() + [name])
+            
+            if embedding_values_classes[i] == name:
+                save_embeddings.append(x_embedded[i].tolist() + [name])
 
     columns = ['x_{}'.format(i) for i in range(n_components)] + ['class']
     save_embeddings = pd.DataFrame(save_embeddings, columns=columns)
