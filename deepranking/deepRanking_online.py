@@ -43,15 +43,16 @@ if __name__ == '__main__':
                   outputs=[labels_plus_embeddings, classification])
 
     model.compile(loss=[triplet_loss_adapted_from_tf, 'categorical_crossentropy'],
-                  loss_weights=[2, 1],
+                  loss_weights=[4, 1],
                   optimizer=Adam(lr=0.001),
                   metrics=['acc'])
 
-    batch_size = 1242
+    batch_size = 1630
     dg = ImageDataGenerator(
         horizontal_flip=True,
         brightness_range=[0.7, 1.3],
         zoom_range=[0.5, 1.5],
+        rotation_range=60,
         preprocessing_function=preprocessing
     )
 
@@ -70,9 +71,9 @@ if __name__ == '__main__':
     reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.1, patience=15, verbose=1, mode='min',
                                   min_delta=0.01, cooldown=0, min_lr=0)
 
-    stop = EarlyStopping(monitor='loss', patience=20, min_delta=0.01)
+    stop = EarlyStopping(monitor='loss', patience=25, min_delta=0.01)
 
-    train_steps_per_epoch = np.ceil(train_generator.n / batch_size)
+    train_steps_per_epoch = 16
     train_epocs = 300
     model.fit_generator(train_generator,
                         steps_per_epoch=train_steps_per_epoch,
