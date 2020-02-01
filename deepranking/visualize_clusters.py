@@ -2,13 +2,10 @@ import files
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 from clustering_strategy import ClusteringStrategy
 
 if __name__ == '__main__':
-    
-    METH0D = 'PCA' # 'TSNE' 'PCA'
 
     classes_dirs = [d for d in files.small_images_classes_directory.iterdir() if d.is_dir()]
     classes_names = [d.parts[-1] for d in classes_dirs]
@@ -31,14 +28,11 @@ if __name__ == '__main__':
             embedding_values_classes.append(c)
 
     embedding_values = np.array(embedding_values)
-    print('{} dataset computation...'.format(METH0D))
-    if METH0D == 'TSNE':
-        x_embedded = TSNE(n_components=2).fit_transform(embedding_values)
-        x_embedded_3d = TSNE(n_components=3).fit_transform(embedding_values)
-    
-    if METH0D == 'PCA':
-        x_embedded = PCA(n_components=2).fit_transform(embedding_values)
-        x_embedded_3d = PCA(n_components=3).fit_transform(embedding_values)
+    print('Dataset computation...')
+    reduction = PCA(n_components=2)
+    reduction_3d = PCA(n_components=3)
+    x_embedded = reduction.fit_transform(embedding_values)
+    x_embedded_3d = reduction_3d.fit_transform(embedding_values)
 
     save_embeddings = []
 
@@ -98,13 +92,8 @@ if __name__ == '__main__':
     strategy.load()
     kmeans = strategy.kmeans
 
-    embedding_values = kmeans.cluster_centers_
-    print('{} centroid computation...'.format(METH0D))
-    if METH0D == 'TSNE':
-        x_embedded = TSNE(n_components=2).fit_transform(embedding_values)
-    
-    if METH0D == 'PCA':
-        x_embedded = PCA(n_components=2).fit_transform(embedding_values)
+    print('Centroid computation...')
+    x_embedded = reduction.transform(kmeans.cluster_centers_)
 
     x_1 = x_embedded[:, 0]
     x_2 = x_embedded[:, 1]
