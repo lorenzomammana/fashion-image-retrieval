@@ -231,9 +231,9 @@ class BatchFromFilesMixin():
         # Per ogni classe genero 8 sample
         # batch totale 128
         try:
-            batch = batch.apply(lambda _x: _x.sample(8).reset_index(drop=True))
+            batch = batch.apply(lambda _x: _x.sample(16).reset_index(drop=True))
         except ValueError:
-            batch = batch.apply(lambda _x: _x.sample(8, replace=True).reset_index(drop=True))
+            batch = batch.apply(lambda _x: _x.sample(16, replace=True).reset_index(drop=True))
             print("This batch is garbage")
 
         index_array = np.array(batch['idx'])

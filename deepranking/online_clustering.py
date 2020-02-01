@@ -11,7 +11,7 @@ from keras.models import load_model
 from fashion_utils import triplet_loss_adapted_from_tf
 
 if __name__ == '__main__':
-    model = load_model((files.output_directory / 'onlinemining.h5').absolute().as_posix(),
+    model = load_model((files.output_directory / 'onlinemining_loss.h5').absolute().as_posix(),
                        custom_objects={'triplet_loss_adapted_from_tf': triplet_loss_adapted_from_tf})
 
     classes_dirs = [d for d in files.small_images_classes_directory.iterdir() if d.is_dir()]

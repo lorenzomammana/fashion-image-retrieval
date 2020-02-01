@@ -13,7 +13,7 @@ import keras
 class FashionSimilarity:
 
     def __init__(self):
-        self.model = load_model((files.output_directory / 'onlinemining.h5').absolute().as_posix(),
+        self.model = load_model((files.output_directory / 'onlinemining_loss.h5').absolute().as_posix(),
                                 custom_objects={'triplet_loss_adapted_from_tf': triplet_loss_adapted_from_tf})
         self.kmeans = joblib.load(files.small_images_classes_kmeans)
         self.centroid_classes = pd.read_csv(files.small_images_classes_centroids)
