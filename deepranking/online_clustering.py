@@ -26,12 +26,13 @@ if __name__ == '__main__':
     for p, c in zip(classes_dirs, classes_names):
         images = images + [i.as_posix().split('/')[-2:] for i in p.iterdir() if i.is_file()]
     n_classes = len(classes_names)
-    embedding_values = []
 
     # For each class
     images = np.random.permutation(images)
 
     print('Computing embedding...')
+
+    embedding_values = []
 
     perc_factor = 0.1
     sample_per_class_needed = {}
@@ -41,8 +42,6 @@ if __name__ == '__main__':
     centroids_initialization = {}
     for c in classes_names:
         centroids_initialization[c] = []
-
-    embedding_files = []
 
     for label, i in tqdm(images):
 
@@ -72,13 +71,14 @@ if __name__ == '__main__':
     # Init clustering centroids
     # strategy.init_centroids(centroids_initialization)
 
-    for i in tqdm(range(0, len(embedding_values), batch_size)):
+    embedding_values = np.array(embedding_values)
+    for i in tqdm(range(0, embedding_values.shape[0], batch_size)):
         # Update clustering
-        strategy.fit_batch(embedding_values[i:(i + 128)])
+        strategy.fit_batch(embedding_values[i:(i + batch_size)])
     
     # Update clustering
-    if (i + 128) > len(embedding_values):
-        strategy.fit_batch(embedding_values[i:len(embedding_values)])
+    if (i + batch_size) > embedding_values.shape[0]:
+        strategy.fit_batch(embedding_values[i:embedding_values.shape[0]])
 
     # Save clustering to file
     strategy.save()
@@ -89,4 +89,4 @@ if __name__ == '__main__':
 
     print('Computing clustering scores...')
 
-    strategy.compute_scores()
+    strategy.compute_scores(embedding_values)

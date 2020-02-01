@@ -9,7 +9,6 @@ from clustering_strategy import ClusteringStrategy
 if __name__ == '__main__':
     
     METH0D = 'PCA' # 'TSNE' 'PCA'
-    n_components = 2
 
     classes_dirs = [d for d in files.small_images_classes_directory.iterdir() if d.is_dir()]
     classes_names = [d.parts[-1] for d in classes_dirs]
@@ -32,28 +31,27 @@ if __name__ == '__main__':
             embedding_values_classes.append(c)
 
     embedding_values = np.array(embedding_values)
-    print('{} dataset computation with {} components...'.format(METH0D, n_components))
+    print('{} dataset computation...'.format(METH0D))
     if METH0D == 'TSNE':
-        x_embedded = TSNE(n_components=n_components).fit_transform(embedding_values)
+        x_embedded = TSNE(n_components=2).fit_transform(embedding_values)
+        x_embedded_3d = TSNE(n_components=3).fit_transform(embedding_values)
     
     if METH0D == 'PCA':
-        x_embedded = PCA(n_components=n_components).fit_transform(embedding_values)
+        x_embedded = PCA(n_components=2).fit_transform(embedding_values)
+        x_embedded_3d = PCA(n_components=3).fit_transform(embedding_values)
 
     save_embeddings = []
 
     for name in classes_names:
 
-        for i in range(x_embedded.shape[0]):
+        for i in range(x_embedded_3d.shape[0]):
             
-            if embedding_values_classes[i] == name:
-                save_embeddings.append(x_embedded[i].tolist() + [name])
+            if embedding_values_classes[i] == name: 
+                save_embeddings.append(x_embedded_3d[i].tolist() + [name])
 
-    columns = ['x_{}'.format(i) for i in range(n_components)] + ['class']
+    columns = ['x_{}'.format(i) for i in range(3)] + ['class']
     save_embeddings = pd.DataFrame(save_embeddings, columns=columns)
     save_embeddings.to_csv(files.reduced_embeddings_path, index=False)
-
-    if n_components > 2:
-        exit(0)
 
     # Plot single file clusters
     for name, color in zip(classes_names, classes_colors):
@@ -103,10 +101,10 @@ if __name__ == '__main__':
     embedding_values = kmeans.cluster_centers_
     print('{} centroid computation...'.format(METH0D))
     if METH0D == 'TSNE':
-        x_embedded = TSNE(n_components=n_components).fit_transform(embedding_values)
+        x_embedded = TSNE(n_components=2).fit_transform(embedding_values)
     
     if METH0D == 'PCA':
-        x_embedded = PCA(n_components=n_components).fit_transform(embedding_values)
+        x_embedded = PCA(n_components=2).fit_transform(embedding_values)
 
     x_1 = x_embedded[:, 0]
     x_2 = x_embedded[:, 1]
