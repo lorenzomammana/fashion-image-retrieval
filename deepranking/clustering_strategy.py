@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import MiniBatchKMeans
 import sklearn.metrics.cluster as cscores
+from sklearn import metrics
 
 class ClusteringStrategy():
 
@@ -12,6 +13,7 @@ class ClusteringStrategy():
         self.k = k
         self.batch_size = batch_size
         self.kmeans = MiniBatchKMeans(n_clusters=self.k, batch_size=self.batch_size)
+        self.cluster_labels = []
         self.labels_true = []
         self.labels_pred = []
 
@@ -82,24 +84,39 @@ class ClusteringStrategy():
         centroids_classes = pd.DataFrame(centroids_classes, columns=['centroid', 'class'])
         centroids_classes.to_csv(files.small_images_classes_centroids, index=False)
 
-    def compute_scores(self):
+    def compute_scores(self, x):
         
+        self.cluster_labels = np.ndarray((x.shape[0],))
+
+        for i in range(0, x.shape[0], self.batch_size):
+            predictions = self.kmeans.predict(x[i:(i + self.batch_size)])
+            self.cluster_labels[i:(i + self.batch_size)] = predictions
+    
+        if (i + self.batch_size) > x.shape[0]:
+            predictions = self.kmeans.predict(x[i:x.shape[0]])
+            self.cluster_labels[i:x.shape[0]] = predictions
+
         confusion_matrix = cscores.contingency_matrix(self.labels_true, self.labels_pred)
         purity_score = np.sum(np.amax(confusion_matrix, axis=0)) / np.sum(confusion_matrix)
         homogeneity_score, completeness_score, v_measure_score = cscores.homogeneity_completeness_v_measure(self.labels_true, self.labels_pred)
 
         scores = [
-            ['purity_score', purity_score],
-            ['adjusted_rand_score', cscores.adjusted_rand_score(self.labels_true, self.labels_pred)],
-            ['completeness_score', completeness_score],
-            ['fowlkes_mallows_score', cscores.fowlkes_mallows_score(self.labels_true, self.labels_pred)],
-            ['homogeneity_score', homogeneity_score],
-            ['mutual_info_score', cscores.mutual_info_score(self.labels_true, self.labels_pred)],
-            ['normalized_mutual_info_score', cscores.normalized_mutual_info_score(self.labels_true, self.labels_pred)],
-            ['v_measure_score', v_measure_score]
+            #['calinski_harabasz_score', 'internal', cscores.calinski_harabasz_score(x, self.cluster_labels)],
+            ['davies_bouldin_score', 'internal', metrics.davies_bouldin_score(x, self.cluster_labels)],
+            ['silhouette_score', 'internal', metrics.silhouette_score(x, self.cluster_labels)],
+            #['silhouette_samples', 'internal', cscores.silhouette_samples(x, self.cluster_labels)],
+            ['purity_score', 'external', purity_score],
+            ['adjusted_rand_score', 'external', cscores.adjusted_rand_score(self.labels_true, self.labels_pred)],
+            ['completeness_score', 'external', completeness_score],
+            ['fowlkes_mallows_score', 'external', cscores.fowlkes_mallows_score(self.labels_true, self.labels_pred)],
+            ['homogeneity_score', 'external', homogeneity_score],
+            ['adjusted_mutual_info_score', 'external', cscores.adjusted_mutual_info_score(self.labels_true, self.labels_pred)],
+            ['mutual_info_score', 'external', cscores.mutual_info_score(self.labels_true, self.labels_pred)],
+            ['normalized_mutual_info_score', 'external', cscores.normalized_mutual_info_score(self.labels_true, self.labels_pred)],
+            ['v_measure_score', 'external', v_measure_score]
         ]
 
-        scores = pd.DataFrame(scores, columns=['name', 'score'])
+        scores = pd.DataFrame(scores, columns=['name', 'type', 'score'])
         scores.to_csv(files.small_images_classes_kmeans_scores, index=False)
 
     def load(self):
