@@ -18,6 +18,11 @@ class FashionSimilarity:
         self.kmeans = joblib.load(files.small_images_classes_kmeans)
         self.centroid_classes = pd.read_csv(files.small_images_classes_centroids)
         self.embeddings = pd.read_csv(files.small_images_classes_features)
+        self.centroids_distance = np.ndarray((self.kmeans.cluster_centers_.shape[0], self.kmeans.cluster_centers_.shape[0]))
+        self.nearest_centroids = np.ndarray((self.centroids_distance.shape[0],))
+
+        # Compute centroids distance matrix
+        self.__centroids_distance_matrix__()
 
     def get_similar_images(self, img_path, n):
         img = load_img(img_path, target_size=(224, 224))
@@ -29,9 +34,10 @@ class FashionSimilarity:
         c = np.argmax(c)
         ev = ev[:, 1:]
         centroid = self.kmeans.predict(ev)[0]
+        nearest_centroid = self.nearest_centroids[centroid]
 
         predicted_class = self.centroid_classes[self.centroid_classes['centroid'] == centroid].iloc[0, 1]
-        cluster_images = self.embeddings[self.embeddings['cluster'] == centroid]
+        cluster_images = self.embeddings[(self.embeddings['cluster'] == centroid) | (self.embeddings['cluster'] == nearest_centroid)]
 
         similarity_scores = []
         for i in range(cluster_images.shape[0]):
@@ -51,3 +57,15 @@ class FashionSimilarity:
         similarity_scores = similarity_scores.iloc[0:max_index]
 
         return predicted_class, similarity_scores, c
+
+    def __centroids_distance_matrix__(self):
+
+        for i in range(self.centroids_distance.shape[0]):
+            for j in range(self.centroids_distance.shape[1]):
+                
+                if i == j:
+                    self.centroids_distance[i, j] = np.Inf
+                else:
+                    self.centroids_distance[i, j] = np.linalg.norm(self.kmeans.cluster_centers_[i] - self.kmeans.cluster_centers_[j])
+
+        self.nearest_centroids = np.argmin(self.centroids_distance, axis=1)
