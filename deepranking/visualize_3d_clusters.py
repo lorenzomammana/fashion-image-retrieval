@@ -15,15 +15,22 @@ if __name__ == '__main__':
     data = pd.read_csv(path)
 
     classes = list(set(data['class'].values))
+    clusters = list(set(data['cluster'].values))
+    
     colors_classes = {}
     for c in classes:
         colors_classes[c] = np.random.rand(3)
+
+    color_clusters = {}
+    for c in clusters:
+        colors_classes[str(c)] = np.random.rand(3)
 
     points = []
     colors = []
     for i in range(data.shape[0]):
         p = np.array([data.iloc[i, 0], data.iloc[i, 1], data.iloc[i, 2]])
-        c = colors_classes[data.iloc[i, 3]]
+        #c = color_clusters[str(data.iloc[i, 3])] # Cluster
+        c = colors_classes[data.iloc[i, 4]] # Class
         points.append(p)
         colors.append(c)
 
