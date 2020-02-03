@@ -30,7 +30,8 @@ class FashionSimilarity:
         img = preprocess_input(img, backend=keras.backend, layers=keras.layers, models=keras.models, utils=keras.utils)
         img = np.expand_dims(img, axis=0)
 
-        ev = self.model.predict([img, img, img, np.zeros(1)])[0]
+        ev, c = self.model.predict([img, img, img, np.zeros(1)])
+        c = np.argmax(c)
         ev = ev[:, 1:]
         centroid = self.kmeans.predict(ev)[0]
         nearest_centroid = self.nearest_centroids[centroid]
@@ -55,8 +56,7 @@ class FashionSimilarity:
         max_index = np.min([similarity_scores.shape[0], n])
         similarity_scores = similarity_scores.iloc[0:max_index]
 
-        return predicted_class, similarity_scores
-
+        return predicted_class, similarity_scores, c
 
     def __centroids_distance_matrix__(self):
 
