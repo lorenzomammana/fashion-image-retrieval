@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     color_clusters = {}
     for c in clusters:
-        colors_classes[str(c)] = np.random.rand(3)
+        color_clusters[str(c)] = np.random.rand(3)
 
     points = []
     colors = []
