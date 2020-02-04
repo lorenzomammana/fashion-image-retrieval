@@ -1,5 +1,5 @@
-from autoencoder.fashion_dataset import FashionDataset
-import autoencoder.files as files
+from fashion_dataset import FashionDataset
+import files as files
 import os
 import shutil
 
