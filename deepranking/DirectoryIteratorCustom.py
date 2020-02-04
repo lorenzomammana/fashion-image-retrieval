@@ -125,6 +125,12 @@ class DirectoryIterator(BatchFromFilesMixin, Iterator):
         for res in results:
             classes, filenames = res.get()
             classes_list.append(classes)
+            classes_list.append(classes)
+            classes_list.append(classes)
+            classes_list.append(classes)
+            self.filenames += filenames
+            self.filenames += filenames
+            self.filenames += filenames
             self.filenames += filenames
         self.samples = len(self.filenames)
         self.classes = np.zeros((self.samples,), dtype='int32')
