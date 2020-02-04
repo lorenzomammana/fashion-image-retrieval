@@ -4,6 +4,7 @@ import keras
 from keras_maskrcnn import models
 from keras_retinanet.utils.image import read_image_bgr, preprocess_image, resize_image
 from keras_retinanet.utils.colors import label_color
+import PIL
 
 # import miscellaneous modules
 import matplotlib.pyplot as plt
@@ -126,7 +127,6 @@ def main(filename):
 
     # correct for image scale
     boxes /= scale
-
     segment_id = 0
 
     threshold_score = 0.3
@@ -136,6 +136,7 @@ def main(filename):
             break
 
         drawclone = np.copy(draw)
+        drawclone2 = np.copy(draw)
 
         b = box.astype(int)
         color = label_color(label)
@@ -149,14 +150,9 @@ def main(filename):
         bbox = bbox[0].bbox
 
         # draw_caption(drawclone, b, caption)
-        plt.figure()
-        plt.axis('off')
-        plt.imshow(drawclone[bbox[0]:bbox[2], bbox[1]:bbox[3]])
-
-        segment_path = '/tmp/segment_' + str(segment_id) + '.jpg'
-        save_path_segment = segment_path
-        plt.savefig(save_path_segment)
-        plt.close()
+        save_path_segment = '/tmp/segment_' + str(segment_id) + '.jpg'
+        im = PIL.Image.fromarray(drawclone2[bbox[0]:bbox[2], bbox[1]:bbox[3]])
+        im.save(save_path_segment)
 
         segment_id += 1
 
