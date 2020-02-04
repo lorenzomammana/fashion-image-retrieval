@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from keras_preprocessing.image import load_img, img_to_array
 
 
-def plot_output_image(clothes):
+def plot_output_image(label, clothes):
     plt.clf()
     fig = plt.figure(figsize=(5, 2))
     columns = 5
@@ -24,7 +24,8 @@ def plot_output_image(clothes):
         plt.axis('off')
         plt.imshow(img)
 
-    plt.savefig((files.ROOT / 'similarity-output' / ('out_' + clothes)).absolute().as_posix())
+    plt.savefig((files.ROOT / 'similarity-output' / label / ('out_' + clothes)).absolute().as_posix())
+    plt.close()
 
 
 if __name__ == '__main__':
@@ -32,11 +33,37 @@ if __name__ == '__main__':
     # TODO get from cmd or something else
     similarity = FashionSimilarity()
 
-    for fname in os.listdir(files.test_images):
-        query_img = files.test_images / fname
-        n = 10
+    idx_to_class = {
+        0: 'Belts',
+        1: 'Casual Shoes',
+        2: 'Dresses',
+        3: 'Flats',
+        4: 'Formal Shoes',
+        5: 'Handbags',
+        6: 'Heels',
+        7: 'Jeans',
+        8: 'Sandals',
+        9: 'Shirts',
+        10: 'Shorts',
+        11: 'Sports Shoes',
+        12: 'Sunglasses',
+        13: 'Tops',
+        14: 'Trousers',
+        15: 'Tshirts'
+    }
 
-        img_class, similar_images = similarity.get_similar_images(query_img, n)
+    for label in os.listdir(files.test_images):
+        for i, fname in enumerate(os.listdir(files.test_images / label)):
 
-        print(similar_images)
-        plot_output_image(fname)
+            if i > 5:
+                break
+
+            query_img = files.test_images / label / fname
+            n = 10
+
+            img_class, similar_images, c = similarity.get_similar_images(query_img, n)
+
+            print(fname)
+            print("Predicted class: " + idx_to_class.get(c))
+            print(similar_images)
+            plot_output_image(label, fname)
