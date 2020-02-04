@@ -14,18 +14,20 @@ if __name__ == '__main__':
     batch_size = 128
     embedding_values = []
     embedding_values_classes = []
+    embedding_values_clusters = []
 
     print('Loading data...')
-    for c in classes_names:
+    data = pd.read_csv(files.small_images_classes_features)
+    for i in range(data.shape[0]):
 
-        embedding_dir = files.small_images_classes_embeddings / c
-        embedding_files = [v for v in embedding_dir.iterdir() if v.is_file()]
+        embedding_dir = files.small_images_classes_embeddings / data.iloc[i, 2]
 
-        for f in embedding_files:
+        embedding = np.loadtxt(embedding_dir / '{}.txt'.format(data.iloc[i, 0]))
+        embedding_values.append(embedding)
+        embedding_values_classes.append(data.iloc[i, 2])
+        embedding_values_clusters.append(data.iloc[i, 1])
 
-            embedding = np.loadtxt(f)
-            embedding_values.append(embedding)
-            embedding_values_classes.append(c)
+    data = None
 
     embedding_values = np.array(embedding_values)
     print('Dataset computation...')
@@ -36,14 +38,11 @@ if __name__ == '__main__':
 
     save_embeddings = []
 
-    for name in classes_names:
+    for i in range(x_embedded_3d.shape[0]):
 
-        for i in range(x_embedded_3d.shape[0]):
-            
-            if embedding_values_classes[i] == name: 
-                save_embeddings.append(x_embedded_3d[i].tolist() + [name])
+        save_embeddings.append(x_embedded_3d[i].tolist() + [embedding_values_clusters[i], embedding_values_classes[i]])
 
-    columns = ['x_{}'.format(i) for i in range(3)] + ['class']
+    columns = ['x_{}'.format(i) for i in range(3)] + ['cluster', 'class']
     save_embeddings = pd.DataFrame(save_embeddings, columns=columns)
     save_embeddings.to_csv(files.reduced_embeddings_path, index=False)
 
