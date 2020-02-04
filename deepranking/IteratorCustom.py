@@ -15,7 +15,6 @@ try:
 except ImportError:
     IteratorType = object
 
-from keras.utils import Sequence
 from keras_preprocessing.image.utils import (array_to_img,
                                              img_to_array,
                                              load_img)
@@ -228,12 +227,12 @@ class BatchFromFilesMixin():
         batch = pd.DataFrame(batch, columns=['idx', 'class'])
         batch = batch.groupby('class')
 
-        # Per ogni classe genero 8 sample
+        # Per ogni classe genero K sample
         # batch totale 128
         try:
-            batch = batch.apply(lambda _x: _x.sample(16).reset_index(drop=True))
+            batch = batch.apply(lambda _x: _x.sample(18).reset_index(drop=True))
         except ValueError:
-            batch = batch.apply(lambda _x: _x.sample(16, replace=True).reset_index(drop=True))
+            batch = batch.apply(lambda _x: _x.sample(18, replace=True).reset_index(drop=True))
             print("This batch is garbage")
 
         index_array = np.array(batch['idx'])
@@ -248,7 +247,9 @@ class BatchFromFilesMixin():
                            color_mode=self.color_mode,
                            target_size=self.target_size,
                            interpolation=self.interpolation)
+
             x = img_to_array(img, data_format=self.data_format)
+
             # Pillow images should be closed after `load_img`,
             # but not PIL images.
             if hasattr(img, 'close'):
