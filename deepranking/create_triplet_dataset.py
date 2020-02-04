@@ -1,11 +1,11 @@
-from autoencoder.fashion_dataset import FashionDataset
-import autoencoder.files as files
+from fashion_dataset import FashionDataset
+import files as files
 import os
 import shutil
 
 dataset = FashionDataset(files.small_images_directory)
 
-new_path_root = files.ROOT / 'small_classes'
+new_path_root = files.small_images_classes_directory
 if os.path.exists(new_path_root):
     shutil.rmtree(new_path_root)
 
