@@ -10,6 +10,10 @@ if __name__ == '__main__':
     classes_dirs = [d for d in files.small_images_classes_directory.iterdir() if d.is_dir()]
     classes_names = [d.parts[-1] for d in classes_dirs]
     classes_colors = np.random.rand(len(classes_names), 3)
+    _centroid_classes = pd.read_csv(files.small_images_classes_centroids)
+    cluster_classes = {}
+    for i in range(_centroid_classes.shape[0]):
+        cluster_classes[_centroid_classes.iloc[i, 1]] = _centroid_classes.iloc[i, 0]
 
     batch_size = 128
     embedding_values = []
@@ -86,6 +90,58 @@ if __name__ == '__main__':
     plt.legend(all_scatter_clusters, classes_names, scatterpoints=1, loc=9, bbox_to_anchor=(0.5, -0.1), ncol=4)
     plt.tight_layout()
     plt.savefig(files.clusters_visualization_path / 'all_clusters.pdf')
+
+    # Plot points with same cluster as true label
+    all_scatter_clusters = []
+    plt.clf()
+    for name, color in zip(classes_names, classes_colors):
+        
+        if name not in cluster_classes:
+            continue
+
+        plot_vals = []
+
+        for i in range(x_embedded.shape[0]):
+
+            if embedding_values_classes[i] == name \
+                and embedding_values_clusters[i] == cluster_classes[name]:
+                plot_vals.append([x_embedded[i, 0], x_embedded[i, 1]])
+
+        plot_vals = np.array(plot_vals)
+        sc = plt.scatter(plot_vals[:, 0], plot_vals[:, 1], s=1, color=color)
+        all_scatter_clusters.append(sc)
+    
+    plt.xlim(-1.5, 1.5)
+    plt.ylim(-1.5, 1.5)
+    plt.legend(all_scatter_clusters, classes_names, scatterpoints=1, loc=9, bbox_to_anchor=(0.5, -0.1), ncol=4)
+    plt.tight_layout()
+    plt.savefig(files.clusters_visualization_path / 'all_true_clusters_labels.pdf')
+
+    # Plot points with different cluster than the true label
+    all_scatter_clusters = []
+    plt.clf()
+    for name, color in zip(classes_names, classes_colors):
+
+        if name not in cluster_classes:
+            continue
+
+        plot_vals = []
+
+        for i in range(x_embedded.shape[0]):
+
+            if embedding_values_classes[i] == name \
+                and embedding_values_clusters[i] != cluster_classes[name]:
+                plot_vals.append([x_embedded[i, 0], x_embedded[i, 1]])
+
+        plot_vals = np.array(plot_vals)
+        sc = plt.scatter(plot_vals[:, 0], plot_vals[:, 1], s=1, color=color)
+        all_scatter_clusters.append(sc)
+    
+    plt.xlim(-1.5, 1.5)
+    plt.ylim(-1.5, 1.5)
+    plt.legend(all_scatter_clusters, classes_names, scatterpoints=1, loc=9, bbox_to_anchor=(0.5, -0.1), ncol=4)
+    plt.tight_layout()
+    plt.savefig(files.clusters_visualization_path / 'all_different_clusters_labels.pdf')
 
     strategy = ClusteringStrategy(len(classes_names), batch_size)
     strategy.load()
