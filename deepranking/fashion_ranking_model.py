@@ -5,11 +5,10 @@ from classification_models import Classifiers
 from keras.layers import *
 from keras.models import Model
 from keras import backend as K
-from keras.optimizers import SGD
 import tensorflow as tf
 
 
-class FashionRankingModel():
+class FashionRankingModel:
 
     def __init__(self):
 
