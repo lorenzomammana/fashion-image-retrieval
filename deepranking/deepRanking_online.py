@@ -15,6 +15,8 @@ from keras_applications.resnext import preprocess_input
 from fashion_utils import triplet_loss_adapted_from_tf
 import tensorflow as tf
 import keras
+import preprocess_crop
+
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -47,12 +49,11 @@ if __name__ == '__main__':
                   optimizer=Adam(lr=0.001),
                   metrics=['acc'])
 
-    batch_size = 1630
+    batch_size = 1900
     dg = ImageDataGenerator(
         horizontal_flip=True,
         brightness_range=[0.7, 1.3],
         zoom_range=[0.5, 1.5],
-        rotation_range=60,
         preprocessing_function=preprocessing
     )
 
@@ -60,20 +61,21 @@ if __name__ == '__main__':
                                              batch_size=batch_size,
                                              target_size=(224, 224),
                                              shuffle=True,
-                                             class_mode='categorical'
+                                             class_mode='categorical',
+                                             interpolation='lanczos:random'
                                              )
 
     mcp_save_loss = ModelCheckpoint((files.output_directory / 'onlinemining_loss.h5').absolute().as_posix(),
                                     save_best_only=True,
                                     save_weights_only=False,
-                                    monitor='loss', mode='min')
+                                    monitor='concatenate_3_loss', mode='min')
 
-    reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.1, patience=15, verbose=1, mode='min',
+    reduce_lr = ReduceLROnPlateau(monitor='concatenate_3_loss', factor=0.1, patience=7, verbose=1, mode='min',
                                   min_delta=0.01, cooldown=0, min_lr=0)
 
-    stop = EarlyStopping(monitor='loss', patience=25, min_delta=0.01)
+    stop = EarlyStopping(monitor='concatenate_3_loss', patience=12, min_delta=0.01)
 
-    train_steps_per_epoch = 16
+    train_steps_per_epoch = 55
     train_epocs = 300
     model.fit_generator(train_generator,
                         steps_per_epoch=train_steps_per_epoch,
