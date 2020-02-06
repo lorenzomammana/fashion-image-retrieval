@@ -8,6 +8,8 @@ config.gpu_options.allow_growth = True
 sess = tf.Session(config=config)
 K.set_session(sess)
 
+DB_HOST='90.147.166.154'
+DB_PORT=50051
 
 def loss_tensor(y_true, y_pred, batch_size=8):
     total_loss = tf.convert_to_tensor(0, dtype=tf.float32)
