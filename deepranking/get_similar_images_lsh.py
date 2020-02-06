@@ -5,8 +5,8 @@ import numpy as np
 from keras_preprocessing.image import load_img, img_to_array
 from matplotlib import gridspec
 
-import deepranking.files as files
-from deepranking.fashion_similarity_online import FashionSimilarity
+import files
+from fashion_similarity_online_lsh import FashionSimilarity
 
 
 def plot_output_image(query, similar_images, pred, perc, label, clothes, idx=None):
@@ -24,15 +24,19 @@ def plot_output_image(query, similar_images, pred, perc, label, clothes, idx=Non
     plt.imshow(input)
     for i in range(2):
         for j in range(5):
-            filename = similar_images['class'].iloc[5 * i + j] + '/' + \
-                       str(similar_images['id'].iloc[5 * i + j]) + '.jpg'
-            img = load_img((files.small_images_classes_directory / filename).absolute().as_posix())
-            img = img_to_array(img) / 255
-            ax = plt.subplot(gs01[i, j])
-            ax.axis('off')
-            ax.imshow(img)
-            ax.text(0.5, -0.1, np.round(similar_images['score'].iloc[5 * i + j], 5), size=12, ha="center",
-                    transform=ax.transAxes)
+            try:
+                filename = similar_images['class'].iloc[5 * i + j] + '/' + \
+                           str(similar_images['id'].iloc[5 * i + j]) + '.jpg'
+                img = load_img((files.small_images_classes_directory / filename).absolute().as_posix())
+                img = img_to_array(img) / 255
+                ax = plt.subplot(gs01[i, j])
+                ax.axis('off')
+                ax.imshow(img)
+                ax.text(0.5, -0.1, np.round(similar_images['score'].iloc[5 * i + j], 5), size=12, ha="center",
+                        transform=ax.transAxes)
+            except IndexError:
+                ax = plt.subplot(gs01[i, j])
+                ax.axis('off')
 
     if idx is None:
         plt.savefig((files.ROOT / 'similarity-output' / label / ('out_' + clothes)).absolute().as_posix())
@@ -83,7 +87,7 @@ if __name__ == '__main__':
             query_img = files.test_images / label / fname
             n = 10
 
-            img_class, similar_images, pred, perc = similarity.get_similar_images(query_img, n)
+            similar_images, pred, perc = similarity.get_similar_images(query_img, n)
 
             print(fname)
             print("Predicted class: " + idx_to_class.get(pred))
