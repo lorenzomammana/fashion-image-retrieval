@@ -20,7 +20,7 @@ if __name__ == '__main__':
     batch_size = 128
     data = pd.read_csv(files.small_images_classes_features)
 
-    config = redis_storage.load_hash_configuration('MyHashEuclidean')
+    config = redis_storage.load_hash_configuration('MyHash')
 
     dimension = 4096
 
@@ -28,7 +28,6 @@ if __name__ == '__main__':
         # Config is not existing, create hash from scratch, with 10 projections
         lshash = RandomBinaryProjections('MyHash', 10)
     else:
-        print("Ciao")
         # Config is existing, create hash with None parameters
         lshash = RandomBinaryProjections(None, None)
         # Apply configuration loaded from redis
