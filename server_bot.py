@@ -1,6 +1,7 @@
 from bot.Updater import Updater
 import os, sys, platform, subprocess
 from maskrcnn_modanet.segmentimage import main
+from deepranking.get_similar_images import compute_single_image
 
 
 def fileparts(fn):
@@ -19,7 +20,8 @@ def imageHandler(bot, message, chat_id, local_filename):
     bot.sendMessage(chat_id, "I've found " + str(num_images) + " potential clothes")
 
     for i in range(num_images):
-        bot.sendImage(chat_id, '/tmp/segment_' + str(i) + '.jpg', "")
+        compute_single_image(i)
+        bot.sendImage(chat_id, '/tmp/out_' + str(i) + '.jpg', "")
 
 
 if __name__ == "__main__":
