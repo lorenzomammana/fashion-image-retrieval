@@ -62,10 +62,10 @@ idx_to_class = {
     }
 
 
-def compute_single_image(idx):
+def compute_single_image(idx, similarity_model):
     query_img = '/tmp/segment_{}.jpg'.format(idx)
-    similarity = FashionSimilarity()
-    img_class, similar_images, pred, perc = similarity.get_similar_images(query_img, 10)
+    #similarity = FashionSimilarity()
+    img_class, similar_images, pred, perc = similarity_model.get_similar_images(query_img, 10)
     plot_output_image(query_img, similar_images, idx_to_class.get(pred), perc, None, None, idx)
 
 

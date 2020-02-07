@@ -105,8 +105,8 @@ def draw_mask_only(image, box, mask, label=None, color=None, binarize_threshold=
     return mask
 
 
-def main(filename):
-    model, labels_to_names = loadModel()
+def main(filename, model, labels_to_names):
+    #model, labels_to_names = loadModel()
 
     image = read_image_bgr(filename)
 
