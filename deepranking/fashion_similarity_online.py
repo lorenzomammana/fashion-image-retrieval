@@ -18,11 +18,11 @@ class FashionSimilarity:
         self.kmeans = joblib.load(files.small_images_classes_kmeans)
         self.centroid_classes = pd.read_csv(files.small_images_classes_centroids)
         self.embeddings = pd.read_csv(files.small_images_classes_features)
-        self.centroids_distance = np.ndarray((self.kmeans.cluster_centers_.shape[0], self.kmeans.cluster_centers_.shape[0]))
-        self.nearest_centroids = np.ndarray((self.centroids_distance.shape[0],))
+        # self.centroids_distance = np.ndarray((self.kmeans.cluster_centers_.shape[0], self.kmeans.cluster_centers_.shape[0]))
+        # self.nearest_centroids = np.ndarray((self.centroids_distance.shape[0],))
 
         # Compute centroids distance matrix
-        self.__centroids_distance_matrix__()
+        # self.__centroids_distance_matrix__()
 
     def get_similar_images(self, img_path, n):
         img = load_img(img_path, target_size=(224, 224))
@@ -35,21 +35,33 @@ class FashionSimilarity:
         perc = np.max(c)
         ev = ev[:, 1:]
         centroid = self.kmeans.predict(ev)[0]
-        nearest_centroid = self.nearest_centroids[centroid]
 
         predicted_class = self.centroid_classes[self.centroid_classes['centroid'] == centroid].iloc[0, 1]
-        cluster_images = self.embeddings[(self.embeddings['cluster'] == centroid) | (self.embeddings['cluster'] == nearest_centroid)]
+        
+        data_dir = files.small_images_classes_embeddings
+
+        cluster_data = joblib.load(data_dir / '{}.joblib'.format(centroid))
+        cluster_data_ids = joblib.load(data_dir / '{}_ids.joblib'.format(centroid))
+        cluster_data_class = joblib.load(data_dir / '{}_class.joblib'.format(centroid))
 
         similarity_scores = []
-        for i in range(cluster_images.shape[0]):
-            ev_id = cluster_images.iloc[i, 0]
-            ev_class = cluster_images.iloc[i, 2]
-            ev_path = files.small_images_classes_embeddings / ev_class / '{}.txt'.format(ev_id)
+        for i in range(cluster_data.shape[0]):
 
-            current_ev = np.loadtxt(ev_path)
-            distance = np.linalg.norm(ev - current_ev)
+            distance = np.linalg.norm(ev - cluster_data[i])
+            similarity_scores.append([cluster_data_ids[i], cluster_data_class[i], distance])
 
-            similarity_scores.append([ev_id, ev_class, distance])
+        # cluster_images = self.embeddings[self.embeddings['cluster'] == centroid]
+
+        # similarity_scores = []
+        # for i in range(cluster_images.shape[0]):
+        #     ev_id = cluster_images.iloc[i, 0]
+        #     ev_class = cluster_images.iloc[i, 2]
+        #     ev_path = files.small_images_classes_embeddings / ev_class / '{}.txt'.format(ev_id)
+
+        #     current_ev = np.loadtxt(ev_path)
+        #     distance = np.linalg.norm(ev - current_ev)
+
+        #     similarity_scores.append([ev_id, ev_class, distance])
 
         similarity_scores = pd.DataFrame(similarity_scores, columns=['id', 'class', 'score'])
         similarity_scores = similarity_scores.sort_values(by='score', ascending=True)
