@@ -1,12 +1,12 @@
 from bot.Updater import Updater
 import os, sys, platform, subprocess
-from maskrcnn_modanet.segmentimage import main
-from deepranking import compute_single_image, FashionSimilarity
+from deepranking import compute_single_image, FashionSimilarity, compute_single_image_lsh, FashionSimilarityLSH
 from maskrcnn_modanet import load_mask_rcnn, segment_image
 
 print('Loading models...')
 mask_rcnn_model, labels_to_names = load_mask_rcnn()
 similarity_model = FashionSimilarity()
+# similarity_model = FashionSimilarityLSH()
 print('Models loaded.')
 
 def fileparts(fn):
@@ -26,6 +26,7 @@ def imageHandler(bot, message, chat_id, local_filename):
 
     for i in range(num_images):
         compute_single_image(i, similarity_model)
+        # compute_single_image_lsh(i, similarity_model)
         bot.sendImage(chat_id, '/tmp/out_' + str(i) + '.jpg', "")
 
 

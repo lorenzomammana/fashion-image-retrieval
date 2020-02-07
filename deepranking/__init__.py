@@ -1,2 +1,4 @@
 from .get_similar_images import compute_single_image
+from .get_similar_images_lsh import compute_single_image as compute_single_image_lsh
 from .fashion_similarity_online import FashionSimilarity
+from .fashion_similarity_online_lsh import FashionSimilarity as FashionSimilarityLSH
