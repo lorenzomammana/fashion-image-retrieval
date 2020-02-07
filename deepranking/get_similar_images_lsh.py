@@ -5,8 +5,8 @@ import numpy as np
 from keras_preprocessing.image import load_img, img_to_array
 from matplotlib import gridspec
 
-import files
-from fashion_similarity_online_lsh import FashionSimilarity
+import deepranking.files as files
+from deepranking.fashion_similarity_online_lsh import FashionSimilarity
 
 
 def plot_output_image(query, similar_images, pred, perc, label, clothes, idx=None):
@@ -41,7 +41,7 @@ def plot_output_image(query, similar_images, pred, perc, label, clothes, idx=Non
     if idx is None:
         plt.savefig((files.ROOT / 'similarity-output' / label / ('out_' + clothes)).absolute().as_posix())
     else:
-        plt.savefig('/tmp/out_{}.jpg'.format(idx))
+        plt.savefig('/tmp/out_lsh_{}.jpg'.format(idx))
     plt.clf()
     plt.close(fig)
 
