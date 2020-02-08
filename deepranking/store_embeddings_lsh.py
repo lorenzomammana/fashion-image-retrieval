@@ -8,12 +8,9 @@ import numpy as np
 from tqdm import tqdm
 from nearpy import Engine
 from nearpy.hashes import RandomBinaryProjections
-from nearpy.distances import EuclideanDistance
 from redis import Redis
-from fashion_utils import DB_HOST
 
-
-redis_object = Redis(host=DB_HOST, port=6379, db=0)
+redis_object = Redis(host='localhost', port=6379, db=0)
 redis_storage = RedisStorage(redis_object)
 
 if __name__ == '__main__':
@@ -34,7 +31,7 @@ if __name__ == '__main__':
         lshash.apply_config(config)
 
     # Create engine with pipeline configuration
-    engine = Engine(dimension, lshashes=[lshash], storage=redis_storage, distance=EuclideanDistance)
+    engine = Engine(dimension, lshashes=[lshash], storage=redis_storage)
 
     embedding_values = []
 
@@ -45,3 +42,4 @@ if __name__ == '__main__':
         engine.store_vector(embedding, embedding_dir / '{}.txt'.format(data.iloc[i, 0]))
 
     redis_storage.store_hash_configuration(lshash)
+    redis_object.close()
