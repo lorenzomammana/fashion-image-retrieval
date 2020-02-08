@@ -149,9 +149,11 @@ def main(filename, model, labels_to_names):
         bbox = regionprops(mask_binary[:, :, 0])
         bbox = bbox[0].bbox
 
+        output = drawclone2[bbox[0]:bbox[2], bbox[1]:bbox[3]]
+        # output = np.pad(output, pad_width=((100, 100), (100, 100), (0, 0)), mode='constant', constant_values=255)
         # draw_caption(drawclone, b, caption)
         save_path_segment = '/tmp/segment_' + str(segment_id) + '.jpg'
-        im = PIL.Image.fromarray(drawclone2[bbox[0]:bbox[2], bbox[1]:bbox[3]])
+        im = PIL.Image.fromarray(output)
         im.save(save_path_segment)
 
         segment_id += 1
