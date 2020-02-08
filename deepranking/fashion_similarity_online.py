@@ -3,9 +3,8 @@ from keras.preprocessing.image import load_img, img_to_array
 import pandas as pd
 import numpy as np
 import joblib
-from keras.applications.vgg16 import preprocess_input
 from keras.models import load_model
-from deepranking.fashion_utils import loss_tensor, triplet_loss_adapted_from_tf
+from deepranking.fashion_utils import triplet_loss_adapted_from_tf
 from keras_applications.resnext import preprocess_input
 import keras
 
